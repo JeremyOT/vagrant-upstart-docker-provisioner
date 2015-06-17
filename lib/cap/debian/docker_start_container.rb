@@ -11,8 +11,7 @@ module VagrantPlugins
             # character for a docker container name.
             name = name.gsub("/", "-") if name == config[:original_name]
 
-            args = "--cidfile=#{config[:cidfile]} "
-            args << "-d " if config[:daemonize]
+            args = "--cidfile=#{config[:cidfile]} -a "
             args << "--name #{name} " if name && config[:auto_assign_name] || config[:auto_restart]
             args << config[:args] if config[:args]
             run_command = "docker run #{args} #{config[:image]} #{config[:cmd]}"
