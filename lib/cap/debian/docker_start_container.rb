@@ -11,7 +11,7 @@ module VagrantPlugins
             # character for a docker container name.
             name = name.gsub("/", "-") if name == config[:original_name]
 
-            args = "--cidfile=#{config[:cidfile]} -a "
+            args = "--cidfile=#{config[:cidfile]} "
             args << "--name #{name} " if name && config[:auto_assign_name] || config[:auto_restart]
             args << config[:args] if config[:args]
             run_command = "docker run #{args} #{config[:image]} #{config[:cmd]}"
@@ -29,10 +29,17 @@ script
 end script
 " > /etc/init/#{name}.conf
             SCRIPT
-            machine.ui.detail("Registering #{name} with upstart")
-            machine.communicate.tap do |comm|
-              comm.sudo(script)
-              comm.sudo("service #{name} start")
+            if !config[:daemonize]
+              machine.ui.detail("Running #{name}")
+              machine.communicate.tap do |comm|
+                comm.sudo(run_command)
+              end
+            else
+              machine.ui.detail("Registering #{name} with upstart")
+              machine.communicate.tap do |comm|
+                comm.sudo(script)
+                comm.sudo("service #{name} start")
+              end
             end
           end
         end
