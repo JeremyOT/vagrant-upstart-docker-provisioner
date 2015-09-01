@@ -13,12 +13,19 @@ module VagrantPlugins
                 comm.sudo("lsmod | grep aufs || modprobe aufs || apt-get install -y linux-image-extra-`uname -r`")
               end
               comm.sudo("apt-get update -y")
-              comm.sudo("apt-get install -y --force-yes -q curl")
+              comm.sudo("apt-get install -y --force-yes -q xz-utils curl")
               comm.sudo("curl -sSL https://get.docker.com/gpg | apt-key add -")
-              comm.sudo("echo deb http://get.docker.com/ubuntu docker main > /etc/apt/sources.list.d/docker.list")
-              comm.sudo("apt-get update")
-              comm.sudo("echo lxc lxc/directory string /var/lib/lxc | debconf-set-selections")
-              comm.sudo("apt-get install -y --force-yes -q xz-utils #{package} -o Dpkg::Options::='--force-confdef' -o Dpkg::Options::='--force-confold'")
+              if version != :latest
+                comm.sudo("echo deb http://get.docker.com/ubuntu docker main > /etc/apt/sources.list.d/docker.list")
+                comm.sudo("apt-get update")
+                comm.sudo("echo lxc lxc/directory string /var/lib/lxc | debconf-set-selections")
+                comm.sudo("apt-get install -y --force-yes -q #{package} -o Dpkg::Options::='--force-confdef' -o Dpkg::Options::='--force-confold'")
+              else
+                comm.sudo(<<-SCRIPT
+                  curl -sSL https://get.docker.com/ | sed '/apt-get install -y -q docker-engine/ s/'\\''$/ -o Dpkg::Options::="--force-confdef" -o Dpkg::Options::="--force-confold"'\\''/' | sh
+                SCRIPT
+                )
+              end
             end
           end
         end
